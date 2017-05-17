@@ -6,7 +6,7 @@
     * Revised:        Aizon
     -->
     <meta charset="utf-8" />
-    <title></title>
+    <title>Going to B | </title>
     <meta name="author" content="Aizon" />
     <meta name="renderer" content="webkit">
     <meta name="description" content="Everything about Aizon" />
@@ -30,67 +30,51 @@
         </div>
     </div>
 
-    <div class="index-content dump">
-    <div class="section">
-        <ul class="artical-cate">
-            <li><a href="/"><span>Blog</span></a></li>
-            <li class="on" style="text-align:center"><a href="/dairy"><span>Dairy</span></a></li>
-            <li style="text-align:right"><a href="/project"><span>Project</span></a></li>
+    <link rel="stylesheet" href="/js/prettify/prettify.css" />
+<style type="text/css">
+    body { background:#e8e8e8; }
+    @media screen and (max-width: 750px){
+        body { background:#fff; }
+    }
+    @media screen and (max-width: 1020px){
+        body { background:#fff; }
+    }
+</style>
+
+<div id="content">
+    <div class="entry">
+        <h1 class="entry-title"><a href="/project/2017/05/17/Going-to-B.html" title="Going to B">Going to B</a></h1>
+        <p class="entry-date">2017-05-17</p>
+        <p>We developed a Android app to solve the problem</p>
+
+
+    </div>
+
+    <div class="sidenav">
+        <h2>Blog</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/blog/2016/10/06/For-Sylvanas.html">为了女王</a></li>
+        
         </ul>
 
-        <div class="cate-bar"><span id="cateBar"></span></div>
-
+        <h2>Diary</h2>
         <ul class="artical-list">
+        
+            <li><a href="/diary/2015/06/07/06-07-15.html">15.06.07</a></li>
+        
+        </ul>
+
+        <h2>Project</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/project/2017/05/17/Going-to-B.html">Going to B</a></li>
         
         </ul>
     </div>
-    <div class="aside">
-    </div>
 </div>
 
-
-<script type="text/javascript">
-    $(function(){
-        function animateBar($item,noAni){
-            var spanLeft = $item.find('span').offset().left;
-            var conLeft = $item.parent().offset().left;
-            var left = spanLeft - conLeft;
-            var width = $item.find('span').width() + 8;
-
-            if(noAni){
-                $('#cateBar').css({left:left,width:width})
-            }else{
-                $('#cateBar').stop().animate({left:left,width:width},300)
-            }
-        }
-
-        var waitForFinalEvent = (function () {
-            var timers = {};
-            return function (callback, ms, uniqueId) {
-                if (!uniqueId) {
-                    uniqueId = "Don't call this twice without a uniqueId";
-                }
-                if (timers[uniqueId]) {
-                    clearTimeout (timers[uniqueId]);
-                }
-                timers[uniqueId] = setTimeout(callback, ms);
-            };
-        })();
-
-        $('.artical-cate li').mouseenter(function(){
-            animateBar($(this));
-        }).mouseleave(function(){
-            animateBar($('.artical-cate .on'));
-        });
-
-        $(window).resize(function(e){
-            waitForFinalEvent(function(){
-                animateBar($('.artical-cate .on'));
-            })
-        })
-        animateBar($('.artical-cate .on'),true);
-    });
-</script>
+<script src="/js/post.js" type="text/javascript"></script>
 
 
     <script type="text/javascript">
