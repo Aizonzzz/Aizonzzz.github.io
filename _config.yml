@@ -4,7 +4,6 @@ auto: true
 highlighter: 'rouge'
 #paginate: 8
 permalink: /:title
-
 title: Sylvanas
 url: http://aizonzzz.github.io
 feed: /atom.xml
