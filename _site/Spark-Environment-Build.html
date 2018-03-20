@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+    * Author:         Mukosame
+    * Revised:        Aizon
+    -->
+    <meta charset="utf-8" />
+    <title>使用ubuntu虚拟机搭建spark环境遇到的坑 | Sylvanas</title>
+    <meta name="author" content="Aizon" />
+    <meta name="renderer" content="webkit">
+    <meta name="description" content="Everything about Aizon" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <link rel="stylesheet" href="/css/default.css" type="text/css" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="alternate" type="application/atom+xml" title="Recent Entries" href="/atom.xml" />
+    <script src="/js/jquery-1.7.1.min.js" type="text/javascript"></script>
+</head>
+<body>
+
+    <div class="home-menu">
+        <div class="home-icon-con">
+            <a class="home-menu-icon" href="/">Aizon</a>
+            <a class="home-follow" href="#" title="Contact Me">+</a>
+        </div>
+        <div class="home-contact">
+            <a href="https://github.com/Aizonzzz/" target="_blank" style="margin-left:-5px;"><img src="https://github.com/favicon.ico" alt="" width="22"/></a>
+            <a href="http://weibo.com/u/2319101140" target="_blank" style="margin-left:-5px;"><img src="https://www.weibo.com/favicon.ico" alt="" width="22"/></a>
+            <a href="https://www.zhihu.com/people/bai-li-xiu-xing-87/activities" target="_blank" style="text-align:right"><img src="http://www.zhihu.com/favicon.ico" alt="" width="22"/></a>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="/js/prettify/prettify.css" />
+<style type="text/css">
+    body { background:#e8e8e8; }
+    @media screen and (max-width: 750px){
+        body { background:#fff; }
+    }
+    @media screen and (max-width: 1020px){
+        body { background:#fff; }
+    }
+</style>
+
+<div id="content">
+    <div class="entry">
+        <h1 class="entry-title"><a href="/Spark-Environment-Build" title="使用ubuntu虚拟机搭建spark环境遇到的坑">使用ubuntu虚拟机搭建spark环境遇到的坑</a></h1>
+        <p class="entry-date">2018-03-20</p>
+        <p>使用的环境是Ubuntu 17.04，一主两从共三个虚拟机。</p>
+
+<p>1、创建第一台虚拟机，即master机器。将java、scala、hadoop、spark的压缩包拷进去。解压java和scala的压缩包，配置java和scala的环境变量。</p>
+
+<p>2、赋予master机器登录用户root权限。修改<code class="highlighter-rouge">/etc/passwd</code>文件，将master机器登录用户名后的两个1000修改为0即可。重启电脑后，设置root用户密码：<code class="highlighter-rouge">passwd root</code>。</p>
+
+<p>2、配置虚拟机的静态ip。一般vmware会勾选“使用本地DHCP服务将IP地址分配给虚拟机”，这会在未来会导致虚拟机ip发生变动，导致spark和hadoop无法正常连接slave机器。具体配置方法见<a href="https://www.linuxidc.com/Linux/2017-04/143102.htm">为VMware虚拟机内安装的Ubuntu 16.04设置静态IP地址</a>。</p>
+
+<p>3、修改<code class="highlighter-rouge">/etc/hostname</code>文件，将主机名修改为<code class="highlighter-rouge">master</code>。</p>
+
+<p>4、修改/etc/hosts文件，根据网关地址，将三台机器ip分配在一个子网下。以网关为192.168.21.2，子网掩码为225.225.225.0为例，ip可以配置为： <br />
+<code class="highlighter-rouge">192.168.21.10   master</code> <br />
+<code class="highlighter-rouge">192.168.21.11   slave1</code> <br />
+<code class="highlighter-rouge">192.168.21.12   slave2</code></p>
+
+<p>5、安装ssh服务：<code class="highlighter-rouge">apt-get install openssh-server</code></p>
+
+<p>6、克隆主机。以配置好的master机器克隆出两台slave机器，完成之后修改两台slave机器的<code class="highlighter-rouge">hostname</code>和<code class="highlighter-rouge">ip</code>地址，与第四步中配置的ip地址和主机名相对应。配置完成之后可以使用<code class="highlighter-rouge">ifconfig</code>查看配置是否完成，并互ping看是否可以ping通。 <br />
+7、配置ssh，这是坑最大的一步，最开始照攻略配置完成后无法使用<code class="highlighter-rouge">ssh slave1</code>连接，始终需要输入slave1的root用户密码，而且输入后也会被拒绝连接。至少卡了我3个小时啊啊啊啊啊。</p>
+
+<p>首先在每台主机的/root文件夹下生成密钥仓库。在每台主机上都生成私钥公钥。命令是<code class="highlighter-rouge">ssh-keygen -t rsa</code>，一直按回车就行。  <br />
+修改<code class="highlighter-rouge">/etc/ssh/sshd_config</code>，将<code class="highlighter-rouge">PermitRootLogin</code>项的值设为<code class="highlighter-rouge">yes</code> <br />
+将slave1与slave2上的id_rsa.pub用scp命令发送给master： <br />
+<code class="highlighter-rouge">scp /root/.ssh/id_rsa.pub master@master:/root/.ssh/id_rsa.pub.slave1</code> <br />
+<code class="highlighter-rouge">scp /root/.ssh/id_rsa.pub master@master:/root/.ssh/id_rsa.pub.slave2</code> <br />
+在master上，将所有公钥加到用于认证的公钥文件authorized_keys中： <br />
+<code class="highlighter-rouge">cat /root/.ssh/id_rsa.pub* &gt;&gt; /root/.ssh/authorized_keys</code> <br />
+将公钥文件authorized_keys分发给每台slave： <br />
+<code class="highlighter-rouge">scp /root/.ssh/authorized_keys master@slave1:/root/.ssh/</code> <br />
+<code class="highlighter-rouge">scp /root/.ssh/authorized_keys master@slave2:/root/.ssh/</code></p>
+
+<p>需要注意的是，一定要将.ssh文件夹放在<code class="highlighter-rouge">root</code>文件夹下，这样才可以实现使用ssh免密登录root用户(<code class="highlighter-rouge">ssh slave1</code>为使用root用户登录，<code class="highlighter-rouge">ssh master@slave1</code>为使用master用户登录，两者权限区别很大。)。这也是前面给予用户root权限和设置root密码的原因，有了root权限后可以才可以访问和修改<code class="highlighter-rouge">root</code>文件夹。 <br />
+当然这并不是攻略的问题，攻略使用的是centOS，centOS与Ubuntu的用户组策略不同，centOS允许root用户登录系统，Ubuntu则不允许，这是导致问题的核心（我猜）。</p>
+
+<p>最后在每台主机上，用SSH命令，检验下是否能免密码登录。 <br />
+<code class="highlighter-rouge">ssh slave1</code> <br />
+<code class="highlighter-rouge">ssh slave2</code></p>
+
+<p>8、后面基本就没什么坑了，照攻略配置就好，需要注意的是，如果需要修改的文件不存在，只有对应的template文件的话，直接去掉<code class="highlighter-rouge">template</code>文件的<code class="highlighter-rouge">template</code>后缀，修改之即可。 <br />
+如需要修改<code class="highlighter-rouge">core-site.xml</code>文件，直接将<code class="highlighter-rouge">core-site.xml.template</code>修改为<code class="highlighter-rouge">core-site.xml</code>。</p>
+
+<p>9、我说的攻略是<a href="http://blog.csdn.net/wy250229163/article/details/52729608">使用虚拟机从小白开始搭建Spark集群</a>，真心感谢作者。</p>
+
+<p>10、不要使用ubuntu，请使用centOS:)</p>
+
+        <script>
+            var idcomments_acct = 'f4c480d3c78e8d85e2c4a4ecde1cb400';
+            var idcomments_post_id;
+            var idcomments_post_url;
+        </script>
+        <span id="IDCommentsPostTitle" style="display:none"></span>
+        <script type='text/javascript' src='https://www.intensedebate.com/js/genericCommentWrapperV2.js'></script>
+    </div>
+
+    <div class="sidenav">
+        <h2>Blog</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/The-Last-Winter-Vocation">我才想起来寒假还没总结呢</a></li>
+        
+            <li><a href="/I-know-nothing-about-what-I-am-going-to-say">我也不知道要写什么总之有想说的话</a></li>
+        
+            <li><a href="/New-Year-is-Coming">又一年</a></li>
+        
+            <li><a href="/Coco">I wrote it for Coco</a></li>
+        
+            <li><a href="/Chaos">乱</a></li>
+        
+            <li><a href="/the-Wonder-Woman">The Wonder Woman</a></li>
+        
+            <li><a href="/There-they-were">There They Were</a></li>
+        
+            <li><a href="/Make-the-World-More-Boisterous">让这个世界更加热闹</a></li>
+        
+            <li><a href="/My-Queen">为了女王</a></li>
+        
+            <li><a href="/the-Prime-Minister">丞相，我的丞相</a></li>
+        
+            <li><a href="/Sometimes-I-Look-Back">Sometimes I look back!</a></li>
+        
+            <li><a href="/About-Paladin">关于仙剑</a></li>
+        
+        </ul>
+
+        <h2>Diary</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/06.07.17">06.07.17</a></li>
+        
+            <li><a href="/05.08.17">05.08.17</a></li>
+        
+            <li><a href="/12.03.16">12.03.16</a></li>
+        
+            <li><a href="/06.07.16">06.07.16</a></li>
+        
+            <li><a href="/01.17.16">01.17.16</a></li>
+        
+            <li><a href="/12.25.15">12.25.15</a></li>
+        
+            <li><a href="/12.08.15">12.08.15</a></li>
+        
+            <li><a href="/06.07.15">06.07.15</a></li>
+        
+        </ul>
+
+        <h2>Project</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/Spark-Environment-Build">使用ubuntu虚拟机搭建spark环境遇到的坑</a></li>
+        
+            <li><a href="/Jekyll-Blog">Jekyll Blog的搭建</a></li>
+        
+            <li><a href="/Going-to-B">Going to B</a></li>
+        
+        </ul>
+    </div>
+</div>
+
+<script src="/js/post.js" type="text/javascript"></script>
+
+
+    <script type="text/javascript">
+        $(function(){
+            $('.home-follow').click(function(e){
+                e.preventDefault();
+
+                if($('.home-contact').is(':visible')){
+                    $('.home-contact').slideUp(100);
+                }else{
+                    $('.home-contact').slideDown(100);
+                }
+            });
+        })
+    </script>
+
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date(); a = s.createElement(o),
+  m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+        ga('create', 'UA-99588041-1', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+
+</body>
+</html>
